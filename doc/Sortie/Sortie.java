@@ -2,6 +2,7 @@ import java.net.*;
 import java.io.*;
 import java.util.*;
 import org.json.*;
+import java.util.Scanner;
 
 class Sortie{
 
@@ -11,7 +12,7 @@ class Sortie{
         
      System.setProperty("https.proxyHost", "cache.u-psud.fr");
 	 System.setProperty("https.proxyPort", "8080");
-        // 46+Rue+Du+Luxembourg,+Paris
+
 	 URL url = new URL("https://maps.googleapis.com/maps/api/geocode/json?address=" + adresse + "&key=" +               GooglePlacesKey);
 	 Scanner scan = new Scanner(url.openStream());
 	 String html_output = new String();
@@ -20,13 +21,13 @@ class Sortie{
 	 scan.close();
 
 	 JSONObject j = new JSONObject(html_output);
-
-	 System.out.println ("Coordonnées : ");
+       
+	 /*System.out.println ("Coordonnées : ");*/
 	    JSONObject lieu = (j.getJSONArray("results")).getJSONObject (0);
         JSONObject geo = lieu.getJSONObject("geometry");
         JSONObject loc = geo.getJSONObject("location"); 
-        System.out.println ("  -> latitude : " + loc.getDouble("lat")); 
-        System.out.println ("  -> longitude : " + loc.getDouble("lng"));
+        /*System.out.println ("  -> latitude : " + loc.getDouble("lat")); 
+        System.out.println ("  -> longitude : " + loc.getDouble("lng"));*/
     Double lat = loc.getDouble("lat");
     Double lng = loc.getDouble("lng");     
     Double coordo[] = {lat,lng};    
@@ -49,11 +50,12 @@ class Sortie{
         return res;
     }
     
-    public static void AjouterEtapes(Double CoorM[], String Etape) throws Exception{
+
+    public static String AjouterEtapes(Double CoorM[], String Etape, int rayon) throws Exception{
 	 System.setProperty("https.proxyHost", "cache.u-psud.fr");
 	 System.setProperty("https.proxyPort", "8080");
         
-	 URL url = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + CoorM[0] + "," + CoorM[1] + "&radius=500&type=" + Etape + "&name=" + Etape + "&key=" + GooglePlacesKey);
+	 URL url = new URL("https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=" + CoorM[0] + "," + CoorM[1] + "&radius=" + rayon + "&type=" + Etape + "&name=" + Etape + "&key=" + GooglePlacesKey);
 	 Scanner scan = new Scanner(url.openStream());
 	 String html_output = new String();
 	 while (scan.hasNext())
@@ -62,14 +64,18 @@ class Sortie{
 
 	 JSONObject j = new JSONObject(html_output);
 
-	 System.out.println ("J'ai envie d'un bon " + Etape);
+	 /*System.out.println ("J'ai envie d'un bon " + Etape);
 	 for (int i = 0 ; i < j.getJSONArray("results").length() ; i++){
 	     JSONObject lieu = (j.getJSONArray("results")).getJSONObject (i);
 	     System.out.println ("  -> " + lieu.getString ("name") + ", " + lieu.getString ("vicinity"));
-	 }
+	 }*/
+ 	 JSONObject lieu = (j.getJSONArray("results")).getJSONObject (0);    
+     String res =  lieu.getString ("name") + ", " + lieu.getString ("vicinity");
+     return res;
     }
     
      public static void main(String[] args) throws Exception{
+        Scanner sc = new Scanner(System.in);
         Double coor[][] = new Double[9][2];
         int NbParticipants = 0;
         coor[0] = Coordonnees("9+Avenue+Foch,+Paris");
@@ -78,8 +84,27 @@ class Sortie{
         NbParticipants ++;        
         coor[2] = Coordonnees("5+Avenue+Des+Champs+Elysees,+Paris");
         NbParticipants ++;
-        Double CoorMoyenne[] = CoordonneesMoyennes(NbParticipants, coor);        
-        AjouterEtapes(CoorMoyenne, "restaurant");
+        Double CoorMoyenne[] = CoordonneesMoyennes(NbParticipants, coor);
+        
+
+
+        System.out.println("Combien voulez vous d'étapes ?");
+        String nb = sc.nextLine(); 
+        int nbEtapes = Integer.parseInt(nb);
+        System.out.println("Dans quel rayon ?");
+        // 500 m à pied, 10 km en transport, 20 km en voiture
+        String ray = sc.nextLine();
+        int rayon = Integer.parseInt(ray);
+        for (int i=0; i<nbEtapes; i++){         
+            System.out.println("Où voulez vous aller ?");   
+            //Lieu possibles : cafe, restaurant, bar, cinema, bowling, boite+de+nuit, casino, parc
+            String str = sc.nextLine();          
+            if (str=="bar") {
+                System.out.println("ok");           
+            }           
+            String res = AjouterEtapes(CoorMoyenne, str, rayon);
+            System.out.println ("Lieu proposé : " + res); 
+        }
         
     }
 
